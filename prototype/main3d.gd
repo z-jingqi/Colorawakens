@@ -35,7 +35,7 @@ func rounded_mesh() -> ArrayMesh:
     for corner in [Vector2(0,0),Vector2(1,1),Vector2(1,0),Vector2(0,0),Vector2(0,1),Vector2(1,1)]:
      var p:Vector3=normal+u*((x+corner.x)/24.*2.-1.)+v*((y+corner.y)/24.*2.-1.)
      p*=Vector3(1.7,1.7,.65)
-     var core:Vector3=p.clamp(Vector3(-1.28,-1.28,-.23),Vector3(1.28,1.28,.23))
+     var core:Vector3=p.clamp(Vector3(-1.28,-1.28,-.23),Vector3(1.35,1.35,.3))
      var n: Vector3=(p-core).normalized()
      st.set_normal(n)
      st.add_vertex(core+n*.42)
@@ -46,12 +46,21 @@ func _ready() -> void:
  camera=Camera3D.new(); add_child(camera)
  camera.position=Vector3(0,0,13); camera.projection=Camera3D.PROJECTION_ORTHOGONAL; camera.size=8.8; camera.current=true
  var env:=WorldEnvironment.new(); var e:=Environment.new()
- e.background_mode=Environment.BG_COLOR; e.background_color=Color("111a2c")
+ e.background_mode=Environment.BG_COLOR; e.background_color=Color("1e2e42")
  e.ambient_light_source=Environment.AMBIENT_SOURCE_COLOR; e.ambient_light_color=Color("b4c4e4"); e.ambient_light_energy=.45
  env.environment=e; add_child(env)
  var key:=DirectionalLight3D.new(); key.rotation_degrees=Vector3(-35,-30,0); key.light_energy=1.15; add_child(key)
  var fill:=OmniLight3D.new(); fill.position=Vector3(3,2,5); fill.light_color=Color("b8dbff"); fill.light_energy=1.3; fill.omni_range=12; add_child(fill)
- block=MeshInstance3D.new(); block.mesh=rounded_mesh(); block.position.y=1.1; add_child(block)
+ var imported=(load("res://assets/crystal_block.glb") as PackedScene).instantiate()
+ block=imported.get_child(0) as MeshInstance3D
+ block.owner=null; imported.remove_child(block); imported.queue_free()
+ block.position.y=1.1; add_child(block)
+ # A visible background pattern makes the clear body and optical distortion readable.
+ for row in range(11):
+  for col in range(9):
+   var dot=sphere(Vector3((col-4)*.7,(row-5)*.7+1.1,-2.0),.022,Color("718ca5"))
+   var dm=dot.material_override as StandardMaterial3D;dm.shading_mode=BaseMaterial3D.SHADING_MODE_UNSHADED
+
  mat=ShaderMaterial.new(); mat.shader=load("res://prototype/paint3d.gdshader"); block.material_override=mat
  var canvas:=CanvasLayer.new(); add_child(canvas)
  label=Label.new(); label.position=Vector2(38,36); label.add_theme_font_size_override("font_size",23); canvas.add_child(label)
@@ -63,8 +72,8 @@ func sphere(pos:Vector3,radius:float,color:Color)->MeshInstance3D:
  var material:=StandardMaterial3D.new(); material.albedo_color=color; material.roughness=.13; material.metallic=.1; node.material_override=material
  add_child(node); node.position=pos; return node
 func sdf(p:Vector3)->float:
- var q:=p.abs()-Vector3(1.28,1.28,.23)
- return Vector3(maxf(q.x,0),maxf(q.y,0),maxf(q.z,0)).length()+minf(maxf(q.x,maxf(q.y,q.z)),0)-.42
+ var q:=p.abs()-Vector3(1.35,1.35,.3)
+ return Vector3(maxf(q.x,0),maxf(q.y,0),maxf(q.z,0)).length()+minf(maxf(q.x,maxf(q.y,q.z)),0)-.35
 func launch(target:Vector3,index:int)->void:
  if finish_time>=0: return
  var start:=Vector3(-1.8+index*1.8,-3.4,3.0)
@@ -99,7 +108,7 @@ func _process(delta:float)->void:
    var point:=old.lerp(n.position,k/8.)
    var local:=block.to_local(point)
    if finish_time<0 and sdf(local)<=.015:
-    var slot:=count%16; marks[slot]=Vector4(local.x,local.y,local.z,0); pigments[slot]=COLORS[s.color]; count+=1
+    var slot:=count%16; marks[slot]=Vector4(local.x,local.y,local.z,0); pigments[slot]=COLORS[s.color].srgb_to_linear(); count+=1
     color_mask |= 1 << int(s.color)
     if color_mask==7: begin_finish()
     for j in range(18):
@@ -109,9 +118,11 @@ func _process(delta:float)->void:
   if hit or n.position.length()>15: n.queue_free(); shots.remove_at(i)
  for i in range(drops.size()-1,-1,-1):
   var d:Dictionary=drops[i]; d.age+=delta; d.vel.y-=4*delta; d.node.position+=d.vel*delta
-  d.node.scale=Vector3.ONE*maxf(.01,1.-d.age/.7)
+  var k:float=maxf(.01,1.-d.age/.7)
+  d.node.scale=Vector3(.7,1.6,.7)*k
+  if d.vel.length()>.01:d.node.look_at(d.node.position+d.vel,Vector3.FORWARD)
   if d.age>.7: d.node.queue_free(); drops.remove_at(i)
- label.text="COLORAWAKENS\nCHROMATIC AWAKENING"
+ label.text="COLORAWAKENS\nLIQUID / CRYSTAL STUDY"
  update_finish(delta)
  if finish_time<0: phase_label.text="01  /  COLOR THE WORLD"
  if ("--test" in OS.get_cmdline_user_args() or "--test-repeat" in OS.get_cmdline_user_args()) and t>12:
@@ -141,14 +152,15 @@ func begin_finish()->void:
 
 func ribbon_point(arm:int,u:float,a:float)->Vector3:
  var progress:=clampf(a/1.65,0.,1.)
- var radius:float=(3.4-u*1.8)*pow(1.-progress,1.05)
- var angle:float=arm*TAU/3.+u*4.8+a*5.
+ var radius:float=(1.75-u*.65)*pow(1.-progress,1.05)
+ var angle:float=arm*TAU/3.+u*1.7+a*1.6
  return block.position+Vector3(cos(angle)*radius,sin(angle)*radius*.83,.96+sin(angle)*.12)
 
 func update_finish(delta:float)->void:
  if finish_time<0: return
  finish_time+=delta
  var a:=finish_time
+
  if a<1.65:
   phase_label.text="02  /  DRAWING COLOR IN"
   for s in spirals:
@@ -160,13 +172,13 @@ func update_finish(delta:float)->void:
      var p:=ribbon_point(s.arm,u,a)
      var tangent:Vector3=(ribbon_point(s.arm,u+.001,a)-p).normalized()
      var across:=Vector3(-tangent.y,tangent.x,0.)
-     var width:float=(.006+.075*pow(u,.8))*smoothstep(0.,.15,a)*minf(1.,(1.65-a)*6.)
+     var width:float=(.003+.022*pow(u,.8))*smoothstep(0.,.15,a)*minf(1.,(1.65-a)*6.)
      st.set_color(COLORS[s.arm].lerp(Color.WHITE,.18+u*.25))
      st.add_vertex(p+across*width*corner.y)
    s.node.mesh=st.commit()
-  mat.set_shader_parameter("awaken",smoothstep(.3,1.65,a)*.8)
+  mat.set_shader_parameter("awaken",smoothstep(.3,1.65,a))
  elif a<2.65:
-  phase_label.text="03  /  FULL SPECTRUM"
+  phase_label.text="03  /  CRYSTAL AWAKENING"
   for s in spirals: s.node.queue_free()
   spirals.clear()
   mat.set_shader_parameter("awaken",1.)
@@ -189,9 +201,9 @@ func explode()->void:
  exploded=true; burst_count+=1; block.visible=false
  for i in range(200):
   var start:=Vector3(randf_range(-1.6,1.6),randf_range(-1.6,1.6),randf_range(-.4,.55))
-  var color:=Color.from_hsv(fposmod(start.x*.14+start.y*.17+.55,1.),.75,1.)
+  var color:=Color.from_hsv(fposmod(start.x*.14+start.y*.17+.55,1.),.28,1.)
   var n:=sphere(block.to_global(start),randf_range(.025,.11),color)
   var m:=n.material_override as StandardMaterial3D
-  m.emission_enabled=true; m.emission=color; m.emission_energy_multiplier=.6
+  m.emission_enabled=true; m.emission=color; m.emission_energy_multiplier=.12
   var dir:=Vector3(start.x,start.y,randf_range(-.6,1.6)).normalized()
   fragments.append({"node":n,"vel":dir*randf_range(1.3,4.2),"age":0.,"life":randf_range(1.4,2.5),"spin":Vector3(randf(),randf(),randf())*3.})
