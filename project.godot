@@ -1,7 +1,7 @@
 config_version=5
 [application]
-config/name="Colorawakens | Core gameplay"
-run/main_scene="res://gameplay/main.tscn"
+config/name="Colorawakens | Bloom Cascade"
+run/main_scene="res://gameplay/roguelike.tscn"
 [display]
 window/size/viewport_width=720
 window/size/viewport_height=960

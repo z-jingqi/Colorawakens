@@ -4,9 +4,15 @@
 
 [Original GDD v1.0](docs/GDD-v1.0-original.md) is the user's supplied text, preserved byte-for-byte. Its original title is 《拾色者 Color Bloom》; the repository is named Colorawakens. No design rules have been rewritten.
 
-## Playable core MVP (current default)
+## Bloom Cascade roguelite demo (current default)
 
-Open `project.godot` in Godot 4.6.3 and press F5. Main scene: `gameplay/main.tscn`.
+Open `project.godot` and press F5. Five increasingly dense waves, random three-choice upgrades, six stacking powers, delayed chain reactions and a recovering garden. Drag a ball within the bottom panel and release to fire vertically upward with acceleration. Special powers add secondary split seeds and ricochets.
+
+See [demo design, controls and verification](docs/roguelike-demo.md). Run `godot --headless --path . -- --test-rogue` for the focused suite. `--demo` runs an automated real-gameplay pilot, not human playtesting. Phone performance and balancing remain unvalidated. No persistent progression yet.
+
+## Original core MVP (preserved)
+
+Open `gameplay/main.tscn` in Godot 4.6.3 and press F6 to play the earlier three-area version.
 
 - Pick up a colored ball, move it to the desired position in the bottom panel, then release. The ball follows the pointer and launches **vertically upward from that released position**, never diagonally from its rack. Mouse and one active touch are supported. A tap or release outside the bottom panel cancels without spending cooldown.
 - Three colors retain independent 0.35-second cooldowns. Exported parameters in `gameplay/main.gd` control initial speed (180 px/s), acceleration (850 px/s²), and maximum speed (1000 px/s). Swept collision prevents tunnelling.
