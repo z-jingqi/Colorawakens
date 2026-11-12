@@ -8,17 +8,17 @@
 
 Open `project.godot` in Godot 4.6.3 and press F5. Main scene: `gameplay/main.tscn`.
 
-- Hold one of the three bottom launchers, drag upward to aim, and release. Mouse and single-touch events are supported. Tap without dragging cancels.
-- Each color has a separate 0.35-second cooldown. Balls accelerate from 300 to 1000 px/s; swept collision hits the nearest block without tunnelling.
-- **Any three hits restore a block, including repeated colors.** Red + yellow + blue triggers a 130-pixel burst that adds the final color to nearby blocks and can chain.
-- Blocks descend across six columns. A block crossing the danger line costs one of three lives.
-- Restore 12 blocks to finish the garden. Progress changes the garden colors. Score, best chain, win/loss, pause/resume and replay are implemented.
-- Simple generated tones distinguish launch, hit and rainbow events. Art is deliberately lightweight 2D placeholder geometry; the earlier 3D experiment remains separate and unchanged.
-- Pause button / Escape pauses; R restarts. Play Again resets the full round.
+- Pick up a colored ball, move it to the desired position in the bottom panel, then release. The ball follows the pointer and launches **vertically upward from that released position**, never diagonally from its rack. Mouse and one active touch are supported. A tap or release outside the bottom panel cancels without spending cooldown.
+- Three colors retain independent 0.35-second cooldowns. Exported parameters in `gameplay/main.gd` control initial speed (180 px/s), acceleration (850 px/s²), and maximum speed (1000 px/s). Swept collision prevents tunnelling.
+- Any three hits restore an ordinary block, including repeated colors. Red + yellow + blue creates a 130-pixel color burst and chain reactions.
+- Three short areas introduce mechanics progressively: Quiet Garden (6 restorations), Stone Path (9, adds 5-hit hard blocks), Blooming Grove (12, adds green + blocks whose completion spreads its final color even without three distinct colors). Fall speeds and spawn cadence vary by area.
+- Garden color restoration carries across areas in this play session. Losing retries only the current area; completing all three allows a fresh campaign. No disk save is implemented yet.
+- Life, score, best chain, next area, retry, pause and restart are supported. Escape pauses, R starts a fresh campaign. Losing application focus cancels a held ball and pauses.
+- Visuals remain lightweight 2D placeholders; the earlier 3D material study is preserved unchanged.
 
-Verification: `godot --headless --path . -- --test-gameplay` runs 18 assertions covering repeated colors, ordinary completion, chained rainbow propagation, range, nearest swept collision, miss, upward constraint, cooldown independence, pause, life loss, victory, replay, tap cancel, drag release and an actual accelerating projectile collision.
+Verification: `godot --headless --path . -- --test-gameplay` runs 34 assertions for drag/release origins, horizontal dragging, vertical acceleration and speed cap, mouse/touch flows, cancel/pause/focus loss, cooldown, collisions, ordinary and special blocks, chaining, three-area progression, garden carry-over, retry and victory.
 
-`godot --path . -- --demo` runs a 35-second automated gameplay recording using real projectile paths and game rules, not scripted elimination. This is not human playtesting. Phone touch/hardware performance and final balance are not yet validated. The goal count, fall speed, spawn rate and burst radius are provisional. Additional worlds, special blocks, mobile packaging and full music are outside this MVP.
+`godot --path . -- --demo` runs automated drags through the actual input helpers and projectile rules for up to 120 seconds. The recording is automated gameplay, not human or phone playtesting. Phone hardware/touch performance, difficulty and balance remain unvalidated; these values are provisional.
 
 ## Godot 3D paint study (preserved experiment)
 
