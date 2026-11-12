@@ -6,7 +6,7 @@
 
 ## Godot 3D paint study
 
-Open `project.godot` in **Godot 4.6.3** and run (F6/F5). The main scene is `prototype/main3d.tscn`. The six-shot automatic demonstration starts immediately.
+Open `project.godot` in **Godot 4.6.3** and run (F6/F5). The main scene is `prototype/main3d.tscn`. The three-color automatic demonstration starts immediately.
 
 - Drag upward and release to shoot toward the pointer; `1`, `2`, `3` choose pink/red, yellow, blue.
 - `R` resets; `Space` toggles automatic shots.
@@ -15,18 +15,21 @@ Open `project.godot` in **Godot 4.6.3** and run (F6/F5). The main scene is `prot
 - Impacts create short-lived 3D splash droplets and persistent local-space pigment.
 - The irregular paint footprint expands quickly, then settles. Wetness changes roughness/specular response under real 3D lights.
 - Paint is evaluated in local 3D coordinates, including the bevel, without UV seams or a floating rectangular decal.
+- Once all three colors arrive: three tapered spiral ribbons converge over 1.65 seconds, the block becomes a bright animated spectrum and holds for 1 second, then the block disappears into 200 colored particles.
+- Repeated colors still paint the block but do not complete the three-color condition. No extra gameplay systems were added.
+- The v2 refinement increases the bevel radius, adds a wet pigment rim normal/highlight, reduces harsh lighting, and separates the effect into readable stages.
 
-This is an **effect experiment**, not the complete GDD game: no level flow, three-hit elimination, rainbow chains, progression, mobile export, sound, or physical fluid solver.
+This is an **effect experiment**, not the complete GDD game: no level flow, rainbow chains, progression, mobile export, sound, or physical fluid solver.
 
 ### Limits
 
-The shader supports 16 retained impacts, recycling slots after that. Later paint overlays earlier color; this is not physically accurate pigment mixing. The procedural wetness and spread are artistic approximations. Performance has not been measured on phones. The captured demo is fixed-step video, not a mobile FPS benchmark. Pointer aiming works on the camera plane; no touch-device QA has been performed.
+The shader supports 16 retained impacts, recycling slots after that. Later paint overlays earlier color; this is not physically accurate pigment mixing. The procedural wetness and spread are artistic approximations. Performance has not been measured on phones. The burst currently uses 200 individual mesh instances; a mobile version should batch these with MultiMesh/GPUParticles. The 3 ribbon meshes are rebuilt during their 1.65-second animation only. The captured demo is fixed-step video, not a mobile FPS benchmark. Pointer aiming works on the camera plane; no touch-device QA has been performed.
 
 ### Verification
 
-Run `godot --headless --path . --fixed-fps 60 -- --test`.
+Run `godot --headless --path . --fixed-fps 60 -- --test` and `godot --headless --path . --fixed-fps 60 -- --test-repeat`.
 
-The test runs the actual 3D scene, verifies six swept hits, persistent pigment, and removal of transient droplets. It does not replace graphics QA. The supplied 13-second MP4 was rendered by Godot's Movie Maker using Compatibility/OpenGL with Mesa llvmpipe, then encoded as H.264. Representative frames were visually reviewed.
+The test runs the actual 3D scene, verifies three swept hits, the unique-color gate, exactly one absorption/color/explosion sequence, and cleanup of transient droplets and explosion particles. The repeated-color run verifies three red impacts do not trigger the sequence. It does not replace graphics QA. The supplied 11-second MP4 was rendered by Godot's Movie Maker using Compatibility/OpenGL with Mesa llvmpipe, then encoded as H.264. A half-second contact sheet and full-size spiral, full-color, and explosion frames were visually reviewed. This is still an effect study rather than a final-art reproduction of the concept image.
 
 ### Implementation and licensing
 
