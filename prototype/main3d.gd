@@ -14,7 +14,14 @@ var selected:=0
 var dragging:=false
 var camera: Camera3D
 var label: Label
-var schedule=[.6,2.6,4.6,6.6,8.6,10.6]
+var schedule=[.7,2.5,4.3]
+var color_mask:=0
+var finish_time:=-1.0
+var exploded:=false
+var spirals:Array[Dictionary]=[]
+var fragments:Array[Dictionary]=[]
+var burst_count:=0
+var phase_label:Label
 func rounded_mesh() -> ArrayMesh:
  var st:=SurfaceTool.new()
  st.begin(Mesh.PRIMITIVE_TRIANGLES)
@@ -28,36 +35,38 @@ func rounded_mesh() -> ArrayMesh:
     for corner in [Vector2(0,0),Vector2(1,1),Vector2(1,0),Vector2(0,0),Vector2(0,1),Vector2(1,1)]:
      var p:Vector3=normal+u*((x+corner.x)/24.*2.-1.)+v*((y+corner.y)/24.*2.-1.)
      p*=Vector3(1.7,1.7,.65)
-     var core:Vector3=p.clamp(Vector3(-1.42,-1.42,-.37),Vector3(1.42,1.42,.37))
+     var core:Vector3=p.clamp(Vector3(-1.28,-1.28,-.23),Vector3(1.28,1.28,.23))
      var n: Vector3=(p-core).normalized()
      st.set_normal(n)
-     st.add_vertex(core+n*.28)
+     st.add_vertex(core+n*.42)
  return st.commit()
 func _ready() -> void:
  seed(42)
  marks.resize(16); pigments.resize(16)
  camera=Camera3D.new(); add_child(camera)
- camera.position=Vector3(0,0,13); camera.projection=Camera3D.PROJECTION_ORTHOGONAL; camera.size=8.; camera.current=true
+ camera.position=Vector3(0,0,13); camera.projection=Camera3D.PROJECTION_ORTHOGONAL; camera.size=8.8; camera.current=true
  var env:=WorldEnvironment.new(); var e:=Environment.new()
- e.background_mode=Environment.BG_COLOR; e.background_color=Color("101827")
+ e.background_mode=Environment.BG_COLOR; e.background_color=Color("111a2c")
  e.ambient_light_source=Environment.AMBIENT_SOURCE_COLOR; e.ambient_light_color=Color("b4c4e4"); e.ambient_light_energy=.45
  env.environment=e; add_child(env)
- var key:=DirectionalLight3D.new(); key.rotation_degrees=Vector3(-35,-30,0); key.light_energy=1.7; add_child(key)
- var fill:=OmniLight3D.new(); fill.position=Vector3(3,2,5); fill.light_color=Color("b8dbff"); fill.light_energy=2.; fill.omni_range=12; add_child(fill)
+ var key:=DirectionalLight3D.new(); key.rotation_degrees=Vector3(-35,-30,0); key.light_energy=1.15; add_child(key)
+ var fill:=OmniLight3D.new(); fill.position=Vector3(3,2,5); fill.light_color=Color("b8dbff"); fill.light_energy=1.3; fill.omni_range=12; add_child(fill)
  block=MeshInstance3D.new(); block.mesh=rounded_mesh(); block.position.y=1.1; add_child(block)
  mat=ShaderMaterial.new(); mat.shader=load("res://prototype/paint3d.gdshader"); block.material_override=mat
  var canvas:=CanvasLayer.new(); add_child(canvas)
  label=Label.new(); label.position=Vector2(38,36); label.add_theme_font_size_override("font_size",23); canvas.add_child(label)
- var help:=Label.new(); help.position=Vector2(38,850); help.text="Drag upward + release to shoot\n1 / 2 / 3 color   •   R reset   •   Space auto\nReal rounded mesh • local-space paint • no fluid solver"; help.add_theme_font_size_override("font_size",16); canvas.add_child(help)
+ var help:=Label.new(); help.position=Vector2(38,890); help.text="DRAG + RELEASE     1 / 2 / 3 COLOR     R REPLAY"; help.add_theme_font_size_override("font_size",16); canvas.add_child(help)
+ phase_label=Label.new(); phase_label.position=Vector2(38,755); phase_label.add_theme_font_size_override("font_size",19); canvas.add_child(phase_label)
  for i in range(3): sphere(Vector3(-1.8+i*1.8,-3.4,1.1),.25,COLORS[i])
 func sphere(pos:Vector3,radius:float,color:Color)->MeshInstance3D:
  var node:=MeshInstance3D.new(); var mesh:=SphereMesh.new(); mesh.radius=radius; mesh.height=radius*2; mesh.radial_segments=20; mesh.rings=10; node.mesh=mesh
- var material:=StandardMaterial3D.new(); material.albedo_color=color; material.roughness=.2; node.material_override=material
+ var material:=StandardMaterial3D.new(); material.albedo_color=color; material.roughness=.13; material.metallic=.1; node.material_override=material
  add_child(node); node.position=pos; return node
 func sdf(p:Vector3)->float:
- var q:=p.abs()-Vector3(1.42,1.42,.37)
- return Vector3(maxf(q.x,0),maxf(q.y,0),maxf(q.z,0)).length()+minf(maxf(q.x,maxf(q.y,q.z)),0)-.28
+ var q:=p.abs()-Vector3(1.28,1.28,.23)
+ return Vector3(maxf(q.x,0),maxf(q.y,0),maxf(q.z,0)).length()+minf(maxf(q.x,maxf(q.y,q.z)),0)-.42
 func launch(target:Vector3,index:int)->void:
+ if finish_time>=0: return
  var start:=Vector3(-1.8+index*1.8,-3.4,3.0)
  var n:=sphere(start,.16,COLORS[index])
  shots.append({"node":n,"vel":(target-start).normalized()*3.,"color":index})
@@ -76,8 +85,9 @@ func _process(delta:float)->void:
  t+=delta
  block.rotation=Vector3(.12,sin(t*.65)*.4,.05*sin(t*.4))
  block.position.x=sin(t*.8)*.22
- if auto_mode and next_shot<schedule.size() and t>=schedule[next_shot]:
-  launch(block.to_global(Vector3(-1.25+float(next_shot%3)*1.25,-.1,.35)),next_shot%3); next_shot+=1
+ if auto_mode and finish_time<0 and next_shot<schedule.size() and t>=schedule[next_shot]:
+  var c:=0 if "--test-repeat" in OS.get_cmdline_user_args() else next_shot%3
+  launch(block.to_global(Vector3(-1.1+float(next_shot%3)*1.1,.15,.35)),c); next_shot+=1
  for i in range(mini(count,16)): marks[i].w+=delta
  mat.set_shader_parameter("marks",marks); mat.set_shader_parameter("pigments",pigments); mat.set_shader_parameter("count",mini(count,16))
  for i in range(shots.size()-1,-1,-1):
@@ -88,8 +98,10 @@ func _process(delta:float)->void:
   for k in range(1,9):
    var point:=old.lerp(n.position,k/8.)
    var local:=block.to_local(point)
-   if sdf(local)<=.015:
+   if finish_time<0 and sdf(local)<=.015:
     var slot:=count%16; marks[slot]=Vector4(local.x,local.y,local.z,0); pigments[slot]=COLORS[s.color]; count+=1
+    color_mask |= 1 << int(s.color)
+    if color_mask==7: begin_finish()
     for j in range(18):
      var d:=sphere(point,.025+randf()*.04,COLORS[s.color])
      drops.append({"node":d,"vel":Vector3(randf_range(-2,2),randf_range(-1,2),randf_range(.2,2)),"age":0.})
@@ -99,10 +111,87 @@ func _process(delta:float)->void:
   var d:Dictionary=drops[i]; d.age+=delta; d.vel.y-=4*delta; d.node.position+=d.vel*delta
   d.node.scale=Vector3.ONE*maxf(.01,1.-d.age/.7)
   if d.age>.7: d.node.queue_free(); drops.remove_at(i)
- label.text="COLORAWAKENS\n3D PIGMENT STUDY   /   %02d HITS"%count
- if "--test" in OS.get_cmdline_user_args() and t>13:
-  assert(count==6,"Six shots must hit rounded mesh")
-  assert(marks[0].w>10,"Paint must persist")
-  assert(drops.is_empty(),"Transient splash must expire")
-  print("PASS: 3D rounded SDF, six swept hits, persistent local pigment, expired droplets")
+ label.text="COLORAWAKENS\nCHROMATIC AWAKENING"
+ update_finish(delta)
+ if finish_time<0: phase_label.text="01  /  COLOR THE WORLD"
+ if ("--test" in OS.get_cmdline_user_args() or "--test-repeat" in OS.get_cmdline_user_args()) and t>12:
+  assert(count==3,"Three demo shots must hit")
+  assert(drops.is_empty(),"Transient impact droplets must expire")
+  if "--test-repeat" in OS.get_cmdline_user_args():
+   assert(not exploded and finish_time<0,"Repeated color must not trigger rainbow")
+   assert(color_mask==1)
+  else:
+   assert(exploded and burst_count==1,"Three unique colors trigger exactly one explosion")
+   assert(not block.visible and fragments.is_empty() and spirals.is_empty(),"All burst particles expire")
+  print("PASS: three swept hits; distinct/repeated color gate; ordered absorb-color-burst; particle cleanup")
   get_tree().quit()
+
+func begin_finish()->void:
+ if finish_time>=0: return
+ finish_time=0.
+ for arm in range(3):
+  var n:=MeshInstance3D.new()
+  var m:=StandardMaterial3D.new()
+  m.shading_mode=BaseMaterial3D.SHADING_MODE_UNSHADED
+  m.vertex_color_use_as_albedo=true
+  m.cull_mode=BaseMaterial3D.CULL_DISABLED
+  n.material_override=m
+  add_child(n)
+  spirals.append({"node":n,"arm":arm})
+
+func ribbon_point(arm:int,u:float,a:float)->Vector3:
+ var progress:=clampf(a/1.65,0.,1.)
+ var radius:float=(3.4-u*1.8)*pow(1.-progress,1.05)
+ var angle:float=arm*TAU/3.+u*4.8+a*5.
+ return block.position+Vector3(cos(angle)*radius,sin(angle)*radius*.83,.96+sin(angle)*.12)
+
+func update_finish(delta:float)->void:
+ if finish_time<0: return
+ finish_time+=delta
+ var a:=finish_time
+ if a<1.65:
+  phase_label.text="02  /  DRAWING COLOR IN"
+  for s in spirals:
+   var st:=SurfaceTool.new()
+   st.begin(Mesh.PRIMITIVE_TRIANGLES)
+   for j in range(64):
+    for corner in [Vector2(0,-1),Vector2(1,-1),Vector2(1,1),Vector2(0,-1),Vector2(1,1),Vector2(0,1)]:
+     var u:float=(j+corner.x)/64.
+     var p:=ribbon_point(s.arm,u,a)
+     var tangent:Vector3=(ribbon_point(s.arm,u+.001,a)-p).normalized()
+     var across:=Vector3(-tangent.y,tangent.x,0.)
+     var width:float=(.006+.075*pow(u,.8))*smoothstep(0.,.15,a)*minf(1.,(1.65-a)*6.)
+     st.set_color(COLORS[s.arm].lerp(Color.WHITE,.18+u*.25))
+     st.add_vertex(p+across*width*corner.y)
+   s.node.mesh=st.commit()
+  mat.set_shader_parameter("awaken",smoothstep(.3,1.65,a)*.8)
+ elif a<2.65:
+  phase_label.text="03  /  FULL SPECTRUM"
+  for s in spirals: s.node.queue_free()
+  spirals.clear()
+  mat.set_shader_parameter("awaken",1.)
+  mat.set_shader_parameter("energy",smoothstep(1.65,2.65,a))
+  block.scale=Vector3.ONE*(1.+.08*sin((a-1.65)*PI))
+ elif not exploded:
+  explode()
+ if exploded:
+  phase_label.text="04  /  COLOR RELEASED"
+  for i in range(fragments.size()-1,-1,-1):
+   var f:Dictionary=fragments[i]
+   f.age+=delta; f.vel.y-=.65*delta
+   f.node.position+=f.vel*delta
+   f.node.rotation+=f.spin*delta
+   var life:float=f.life
+   f.node.scale=Vector3.ONE*pow(maxf(0.,1.-f.age/life),.7)
+   if f.age>=life: f.node.queue_free(); fragments.remove_at(i)
+
+func explode()->void:
+ exploded=true; burst_count+=1; block.visible=false
+ for i in range(200):
+  var start:=Vector3(randf_range(-1.6,1.6),randf_range(-1.6,1.6),randf_range(-.4,.55))
+  var color:=Color.from_hsv(fposmod(start.x*.14+start.y*.17+.55,1.),.75,1.)
+  var n:=sphere(block.to_global(start),randf_range(.025,.11),color)
+  var m:=n.material_override as StandardMaterial3D
+  m.emission_enabled=true; m.emission=color; m.emission_energy_multiplier=.6
+  var dir:=Vector3(start.x,start.y,randf_range(-.6,1.6)).normalized()
+  fragments.append({"node":n,"vel":dir*randf_range(1.3,4.2),"age":0.,"life":randf_range(1.4,2.5),"spin":Vector3(randf(),randf(),randf())*3.})
