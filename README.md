@@ -1,3 +1,7 @@
+## Colorful spiral fusion study
+
+Join several colors, spiral inward, and resolve into one organically multicolored sphere. Run `godot --path . colorful_fusion/main.tscn`. [Scope and limitations](docs/colorful-fusion-study.md). Gameplay remains unchanged.
+
 ## Continuous liquid fusion study
 
 Latest sample: incoming balls progressively bridge and settle into the compact 3D group, rather than switching meshes. Run `godot --path . fusion_glass/main.tscn`. [Transition scope, limitations and benchmark](docs/liquid-fusion-study.md). Gameplay is unchanged.
