@@ -4,6 +4,12 @@
 
 [Original GDD v1.0](docs/GDD-v1.0-original.md) is the user's supplied text, preserved byte-for-byte. Its original title is 《拾色者 Color Bloom》; the repository is named Colorawakens. No design rules have been rewritten.
 
+## Memory Bubbles (new independent demo)
+
+Run `godot --path . memory/main.tscn` or open `memory/main.tscn` and press F6. Drag the center ball horizontally and release vertically; two previews appear on the left. Falling balls stick together, switch to a faster constant fall speed, and fuse when three different colors are present. Rainbow balls reveal twelve patches of a gray memory scene.
+
+See [controls, provisional choices and tests](docs/memory-ball-demo.md). The default scene below remains unchanged. `--test-memory` runs the focused tests; `--demo-memory` runs automated gameplay.
+
 ## Bloom Cascade roguelite demo (current default)
 
 Open `project.godot` and press F5. Five increasingly dense waves, random three-choice upgrades, six stacking powers, delayed chain reactions and a recovering garden. Drag a ball within the bottom panel and release to fire vertically upward with acceleration. Special powers add secondary split seeds and ricochets.
