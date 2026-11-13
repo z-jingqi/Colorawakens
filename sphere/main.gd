@@ -31,23 +31,10 @@ func _ready() -> void:
  mat.shader=load("res://sphere/orb.gdshader")
  orb.material_override=mat
  add_child(orb)
- # Background lines make optical distortion visible.
- for i in range(9):
-  var bead:=MeshInstance3D.new()
-  var mesh:=SphereMesh.new()
-  mesh.radius=.018
-  mesh.height=.036
-  bead.mesh=mesh
-  bead.position=Vector3(-1.7+i*.43,-.18,-1.3)
-  var m:=StandardMaterial3D.new()
-  m.shading_mode=BaseMaterial3D.SHADING_MODE_UNSHADED
-  m.albedo_color=Color(.26,.34,.42)
-  bead.material_override=m
-  add_child(bead)
  var ui:=CanvasLayer.new()
  add_child(ui)
  var title:=Label.new()
- title.text="MEMORY / 01"
+ title.text="MEMORY / 02"
  title.position=Vector2(0,105)
  title.size=Vector2(720,40)
  title.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
@@ -55,7 +42,7 @@ func _ready() -> void:
  title.modulate=Color(.66,.77,.9)
  ui.add_child(title)
  var footer:=Label.new()
- footer.text="A quiet moment, held in color."
+ footer.text="LIGHT HELD IN GLASS"
  footer.position=Vector2(0,800)
  footer.size=Vector2(720,40)
  footer.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
