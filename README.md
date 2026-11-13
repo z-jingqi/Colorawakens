@@ -1,3 +1,7 @@
+## Independent glass sphere study
+
+Latest visual direction: complete round spheres, touching without liquid necks. Run `godot --path . glass_cluster/main.tscn`. [Scope and limitations](docs/glass-cluster-study.md). Default gameplay is unchanged.
+
 ## Soft liquid shape study
 
 Run `godot --path . droplets/main.tscn` to inspect the new single-drop, joined figure-eight and three-leaf forms. [Scope, Blender reference and limitations](docs/soft-droplet-study.md). The default game is unchanged.
