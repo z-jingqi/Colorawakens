@@ -1,3 +1,7 @@
+## Continuous glass form study
+
+Latest correction: rigid continuous figure-eight and three-leaf glass, with brighter color and an original interior memory layer. Run `godot --path . joined_glass/main.tscn`. [Scope, references and limitations](docs/joined-glass-study.md). Default gameplay is unchanged.
+
 ## Independent glass sphere study
 
 Latest visual direction: complete round spheres, touching without liquid necks. Run `godot --path . glass_cluster/main.tscn`. [Scope and limitations](docs/glass-cluster-study.md). Default gameplay is unchanged.
