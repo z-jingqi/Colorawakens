@@ -1,3 +1,7 @@
+## Count-driven joined glass study
+
+Latest sample: no internal illustration. Watch 1–5 lobes automatically join, with new lobes extending above/below. Run `godot --path . growing_glass/main.tscn`. [Demo scope and limitations](docs/growing-glass-study.md). This does not change three-color gameplay fusion.
+
 ## Continuous glass form study
 
 Latest correction: rigid continuous figure-eight and three-leaf glass, with brighter color and an original interior memory layer. Run `godot --path . joined_glass/main.tscn`. [Scope, references and limitations](docs/joined-glass-study.md). Default gameplay is unchanged.
