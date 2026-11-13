@@ -1,3 +1,7 @@
+## Compact 3D glass cluster study
+
+Latest correction: compact spatial growth, not a long chain. Watch 1–5 joined lobes and a rotating view: `godot --path . spatial_glass/main.tscn`. [Scope and limitations](docs/spatial-glass-study.md). No interior art or gameplay changes.
+
 ## Count-driven joined glass study
 
 Latest sample: no internal illustration. Watch 1–5 lobes automatically join, with new lobes extending above/below. Run `godot --path . growing_glass/main.tscn`. [Demo scope and limitations](docs/growing-glass-study.md). This does not change three-color gameplay fusion.
