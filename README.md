@@ -1,3 +1,7 @@
+## Continuous liquid fusion study
+
+Latest sample: incoming balls progressively bridge and settle into the compact 3D group, rather than switching meshes. Run `godot --path . fusion_glass/main.tscn`. [Transition scope, limitations and benchmark](docs/liquid-fusion-study.md). Gameplay is unchanged.
+
 ## Compact 3D glass cluster study
 
 Latest correction: compact spatial growth, not a long chain. Watch 1–5 joined lobes and a rotating view: `godot --path . spatial_glass/main.tscn`. [Scope and limitations](docs/spatial-glass-study.md). No interior art or gameplay changes.
