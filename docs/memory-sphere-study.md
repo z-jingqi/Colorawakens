@@ -1,29 +1,38 @@
-# Single memory sphere study, revision 2
+# Memory sphere: natural-light reflection study (revision 3)
 
-Run `godot --path . sphere/main.tscn` or open that scene and press F6.
-The default gameplay scene and all earlier demos remain unchanged.
+## Godot realtime study
+Run `godot --path . sphere/main.tscn`. The default game and all earlier demos are preserved.
+Revision 3 removes the rectangular highlight sticker, point glint and manually drawn caustic
+rings. Reflected and transmitted directions now sample softened disk-area lighting, with a
+soft highlight shoulder instead of clipping. View-space normals keep reflections stationary
+when the smooth sphere rotates. Color absorption and one internal reflected ray remain.
 
-The blue sphere uses Godot's SphereMesh (128 radial segments / 64 rings), not Blender.
-Revision 2 replaces the blurred mist and point-like highlight with sharper curved softbox
-reflections, thickness-dependent blue absorption, a traced entry/exit refraction direction,
-one internal reflected path, a restrained lower caustic accent, and a lighter studio backdrop.
-The shader combines a procedural studio environment with a small screen-space transmission
-contribution. `ior`, `absorption` and `phase` control the optical study.
+This is still an unshaded, art-directed analytic optical approximation, not Godot's physical
+light solver. It approximates a controlled studio environment and only partially samples the
+screen behind it. It does not accurately reflect all scene geometry or other transparent balls.
+The prescribed environment must be adapted before game integration. Phone/many-ball performance
+has not been measured. The high-resolution SphereMesh is not mobile-optimized.
 
-This is an art-directed approximation for a front-facing orthographic camera. The studio
-reflection environment and caustic accent are authored mathematically, not captured lighting
-or a physical caustic solver. It does not reproduce the full scene in reflections. Screen-space
-transmission is limited to captured opaque content; overlapping transparent game balls need a
-separate solution. It is not path tracing, volumetric glass, or film-quality final art. The surface
-is clearer than the first sample but the memory-like internal detail remains simple. Integrating
-many balls, varying the camera and tuning the high-resolution mesh still require further work.
-Phone performance has not been measured; fixed-step video is not a device benchmark.
+## Blender offline reference (not realtime output)
+Run `blender -b -t 8 --python tools/build_memory_sphere.py` with Blender 4.x.
+The script creates a dielectric sphere with Principled transmission, volume absorption,
+three actual area lights, a matte floor and an orthographic camera. Cycles traces reflections
+and refractions at 512 samples, without denoising (this host lacks OpenImageDenoise).
+It saves an editable `tools/source/memory_sphere.blend` and renders
+`/tmp/sphere-v3/Blender-memory-sphere.png`. Create that output directory first.
+The generated blend is not committed; the complete reproducible source script is committed.
 
-Reference: Godot's screen-reading and refraction limitations informed this controlled setup:
+The Blender image is a lighting/material reference, not a model that transfers the same rendered
+appearance into Godot. Cycles' light paths, volume absorption, shadows, tonemapping and ray budget
+are different from the real-time shader. Current Godot output remains less rich and natural.
+Neither study is claimed to reproduce the film or generated concept art.
+
+## Verification
+`godot --headless --path . sphere/main.tscn -- --test-sphere` runs three resource/scene checks.
+`godot --headless --path . memory/main.tscn -- --test-memory` runs 23 gameplay assertions.
+Godot 4.6.3 Compatibility/Mesa movie output was visually checked; fixed-step recording is not
+a target-device FPS benchmark. `--capture-sphere` records eight seconds and exits.
+
+Official refraction limits:
 https://docs.godotengine.org/en/stable/tutorials/shaders/screen-reading_shaders.html
 https://docs.godotengine.org/en/stable/tutorials/3d/standard_material_3d.html
-No external shader code or art was copied.
-
-Verification: `--test-sphere` performs three scene/resource sanity checks. The 23-test memory
-ball suite is unchanged and passes. Actual Godot 4.6.3 Compatibility/Mesa rendering was reviewed
-at several stages, with no shader errors. `--capture-sphere` exits after eight seconds.

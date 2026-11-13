@@ -34,7 +34,7 @@ func _ready() -> void:
  var ui:=CanvasLayer.new()
  add_child(ui)
  var title:=Label.new()
- title.text="MEMORY / 02"
+ title.text="MEMORY / 03"
  title.position=Vector2(0,105)
  title.size=Vector2(720,40)
  title.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
